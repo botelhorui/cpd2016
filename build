@@ -1,2 +1,2 @@
-g++ serial.cpp -o serial -O3 -Wall -std=c++11
+g++ serial.cpp -o serial -Wall -std=c++11
 

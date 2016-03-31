@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string.h>
+#include <omp.h>
 
 using namespace std;
 
@@ -11,6 +12,9 @@ using namespace std;
 int N, C, best = 0, nbest = 0;
 bool bestAssignment[MAX_VARS];
 int* clauses[MAX_CLAUSES];
+
+int D_TASKS;
+int *tasks;
 
 int calcClauses(int vi, bool* vars){
 	int sum = 0;
@@ -59,32 +63,64 @@ int calcClosedClauses(int vi, bool* vars){
 
 
 // vars saves variables assignments
-void branch(int vi, bool* vars){
+void branch(int vi, bool* vars, int task){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
-		if(sum > best){
-			best = sum;
-			nbest = 1;
-			for(int i=1; i <= N; i++){
-				bestAssignment[i] = vars[i];
+		#pragma omp critical 
+		{
+			if(sum > best){
+				best = sum;
+				nbest = 1;
+				for(int i=1; i <= N; i++){
+					bestAssignment[i] = vars[i];
+				}
+			} else if(sum == best){
+				nbest++;
 			}
-		} else if(sum == best){
-			nbest++;			
 		}
+		
 		return;
 	}
-	if(C - calcClosedClauses(vi,vars) < best){
+	int closedClauses = calcClosedClauses(vi,vars);
+	int b;
+	#pragma omp critical
+	b = best;
+	if(C - closedClauses < b){
  		return;
 	}
 
-	vars[vi] = true;
-	branch(vi+1, vars);
-	vars[vi] = false;
-	branch(vi+1, vars);
+	int thread_id = omp_get_thread_num();
+	if(vi != D_TASKS){
+		vars[vi] = true;
+		branch(vi+1, vars, (task << 1) + 1);
+		vars[vi] = false;
+		branch(vi+1, vars, task << 1);
+	}else{
+		
+		if(!tasks[task]){
+			tasks[task] = 1;
+			
+			if(rand() % 2){
+				vars[vi] = true;
+				branch(vi+1, vars, (task << 1) + 1);
+				
+				vars[vi] = false;
+				branch(vi+1, vars, task << 1);
+			}else{
+				vars[vi] = false;
+				branch(vi+1, vars, task << 1);
+				
+				vars[vi] = true;
+				branch(vi+1, vars, (task << 1) + 1);
+			}
+		}
+	}
 }
 
 int main(){
+	int start = omp_get_wtime();
+
 	cin >> N >> C;
 	for(int i = 0; i < C; i++){
 		// 1 for size, 1 for last zero
@@ -98,8 +134,21 @@ int main(){
 
 		}
 	}
+
+	printf("%lf\n", log2(4));
+
+	D_TASKS = log2(omp_get_num_threads()) + 4;
+	tasks = (int*) malloc(sizeof(int) * (1 << D_TASKS) );
+	memset(tasks, 0, sizeof(int) * (1 << D_TASKS));
+
 	bool v[MAX_VARS+1];
-	branch(1, v);
+	#pragma omp parallel for
+	for(int th=0; th < omp_get_num_threads(); th++){
+		bool v2[MAX_VARS+1];
+		memcpy(v2, v, sizeof(v));
+		branch(1, v2, 0);
+		cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
+	}
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
 		cout << (bestAssignment[i] ? i: -i);

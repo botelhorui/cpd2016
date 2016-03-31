@@ -1,0 +1,2 @@
+g++ parallel.cpp -o parallel -Wall -std=c++11 -fopenmp
+
