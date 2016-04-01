@@ -151,15 +151,15 @@ int main(){
 		}
 	}
 	
-	D_TASKS = log2(omp_get_num_threads()) + 4; // NOT WORKING FIX THIS!
-	D_TASKS = 1 + 4;
+	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
+	printf("%d\n", D_TASKS);
+	//D_TASKS = 1 + 4;
 	tasks = (int*) malloc(sizeof(int) * (1 << D_TASKS) );
 	memset(tasks, 0, sizeof(int) * (1 << D_TASKS));
 
 	bool v[MAX_VARS+1];
 	#pragma omp parallel for
 	for(int th=0; th < omp_get_num_threads(); th++){
-		printf("%d\n", D_TASKS);
 		bool v2[MAX_VARS+1];
 		memcpy(v2, v, sizeof(v));
 		branch(1, v2, 0);
