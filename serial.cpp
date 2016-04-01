@@ -66,11 +66,12 @@ void branch(int vi, bool* vars){
 		if(sum > best){
 			best = sum;
 			nbest = 1;
-			for(int i=1; i <= N; i++){
+			memcpy(bestAssignment, vars, (N+1) * sizeof(bool));
+			/*for(int i=1; i <= N; i++){
 				bestAssignment[i] = vars[i];
-			}
+			}*/
 		} else if(sum == best){
-			nbest++;			
+			nbest++;
 		}
 		return;
 	}
