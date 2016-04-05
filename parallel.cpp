@@ -135,7 +135,9 @@ int main(){
 	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
 	printf("%d\n", D_TASKS);
 
-	#pragma omp parallel for schedule(dynamic)
+	#pragma omp parallel
+	{
+		#pragma omp for schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
 			int n = i;
@@ -145,13 +147,10 @@ int main(){
 				vars[j] = (n & 1);
 				n = n >> 1;
 			}
-			//printf("v %d\n", vars[0] ? 1 : 0);
 			branch(D_TASKS+1, vars);
 		}
-		//cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
-		//#pragma omp single
-		//printf("%d\n", omp_get_num_threads());
-	//}
+		printf("Thread %d: %lf\n", omp_get_thread_num(), omp_get_wtime()-start);
+	}
 	cout << best << " " << nbest << endl;
 	
 	for(int i=1; i <= N; i++){
