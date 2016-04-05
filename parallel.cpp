@@ -126,7 +126,6 @@ int main(){
 	#pragma omp parallel for schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
-			cout << i << endl;
 			std::bitset<MAX_VARS> vars(i<<1);
 			branch(D_TASKS+1, vars);
 		}
