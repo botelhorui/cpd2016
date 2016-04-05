@@ -13,11 +13,11 @@ using namespace std;
 #define MAX_TASKS 24
 
 int N, C, best = 0, nbest = 0;
-bool bestAssignment[MAX_VARS];
+bool* bestAssignment = (bool*) malloc(MAX_VARS);
 int* clauses[MAX_CLAUSES];
 
 int D_TASKS;
-int *tasks;	
+int *tasks;
 
 int calcClauses(int vi, bool* vars){
 	int sum = 0;
@@ -70,11 +70,14 @@ void branch(int vi, bool* vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
+
+		bool isBest = false;
 		#pragma omp critical 
-		{	
+		{
 		if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
 					best = sum;
+					isBest = true;
 					memcpy(bestAssignment, vars, MAX_VARS * sizeof(bool));
 					nbest = 1;
 					/*for(int i=1; i <= N; i++){
@@ -82,6 +85,19 @@ void branch(int vi, bool* vars){
 					}*/
 				} else if(sum == best){
 					nbest++;
+				}
+			}
+		}
+
+		bool* newBest = (bool*) malloc(MAX_VARS);
+		memcpy(bestAssignment, vars, MAX_VARS);
+
+		if(isBest){
+			#pragma omp critical
+			{
+				if(sum > best){
+					free(bestAssignment);
+					bestAssignment = newBest;
 				}
 			}
 		}
