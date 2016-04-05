@@ -69,7 +69,7 @@ void branch(int vi, bool* vars, int task){
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
 		if(sum >= best){ // only enter critical region if best must be modified
-			#pragma omp critical 
+			#pragma omp critical
 			{
 				if(sum > best){
 					best = sum;
@@ -99,9 +99,16 @@ void branch(int vi, bool* vars, int task){
 		vars[vi] = false;
 		branch(vi+1, vars, task << 1);
 	}else{
-		
-		if(!tasks[task]){
-			tasks[task] = 1;
+		bool mine = false;
+		#pragma omp critical
+		{
+			if(!tasks[task]){
+				mine = true;
+				tasks[task] = 1;
+			}
+		}
+
+		if(mine){
 			/*
 			int thread_id = omp_get_thread_num();
 			if(thread_id << (vi-1) % 2){
@@ -151,8 +158,8 @@ int main(){
 		}
 	}
 	
-	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
-	printf("%d\n", D_TASKS);
+	D_TASKS = log2(omp_get_max_threads()) + 4;
+	printf("D_TASKS: %d\n", D_TASKS);
 	//D_TASKS = 1 + 4;
 	tasks = (int*) malloc(sizeof(int) * (1 << D_TASKS) );
 	memset(tasks, 0, sizeof(int) * (1 << D_TASKS));
@@ -164,7 +171,6 @@ int main(){
 		memcpy(v2, v, sizeof(v));
 		branch(1, v2, 0);
 		cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
-		printf("%d\n", omp_get_num_threads());
 	}
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
