@@ -8,18 +8,18 @@
 using namespace std;
 
 #define MAX_CLAUSES (2 << 16) + 1
-#define MAX_VARS 128
+#define MAX_VARS 128 +1
 #define MAX_VARS_PER_CLAUSE 21
 #define MAX_TASKS 24
 
 int N, C, best = 0, nbest = 0;
-bitset<MAX_VARS> bestAssignment;
+bool bestAssignment[MAX_VARS];
 int* clauses[MAX_CLAUSES];
 
 int D_TASKS;
 int *tasks;	
 
-int calcClauses(int vi, bitset<MAX_VARS>& vars){
+int calcClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		for(int v=1; v <= clauses[i][0]; v++){
@@ -43,7 +43,7 @@ int calcClauses(int vi, bitset<MAX_VARS>& vars){
 }
 
 // unsatisfiable closed clauses
-int calcClosedClauses(int vi, bitset<MAX_VARS>& vars){
+int calcClosedClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		int v;
@@ -66,7 +66,7 @@ int calcClosedClauses(int vi, bitset<MAX_VARS>& vars){
 
 
 // vars saves variables assignments
-void branch(int vi, std::bitset<MAX_VARS>& vars){
+void branch(int vi, bool* vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
@@ -75,7 +75,7 @@ void branch(int vi, std::bitset<MAX_VARS>& vars){
 		if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
 					best = sum;
-					bestAssignment = vars;					
+					memcpy(bestAssignment, vars, MAX_VARS * sizeof(bool));
 					nbest = 1;
 					/*for(int i=1; i <= N; i++){
 						bestAssignment[i] = vars[i];
@@ -126,7 +126,14 @@ int main(){
 	#pragma omp parallel for schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
-			std::bitset<MAX_VARS> vars(i<<1);
+			int n = i;
+			bool vars[MAX_VARS];
+			memset(vars, 0, sizeof(vars));
+			for(int j=1; n > 0; j++){
+				vars[j] = (n & 1);
+				n = n >> 1;
+			}
+			printf("v %d\n", vars[0] ? 1 : 0);
 			branch(D_TASKS+1, vars);
 		}
 		//cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
