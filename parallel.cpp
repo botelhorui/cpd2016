@@ -133,7 +133,7 @@ int main(){
 				vars[j] = (n & 1);
 				n = n >> 1;
 			}
-			printf("v %d\n", vars[0] ? 1 : 0);
+			//printf("v %d\n", vars[0] ? 1 : 0);
 			branch(D_TASKS+1, vars);
 		}
 		//cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
