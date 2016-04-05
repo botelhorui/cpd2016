@@ -3,25 +3,27 @@
 #include <string.h>
 #include <omp.h>
 #include <math.h>
+#include <bitset>
 
 using namespace std;
 
 #define MAX_CLAUSES (2 << 16) + 1
 #define MAX_VARS 128
 #define MAX_VARS_PER_CLAUSE 21
+#define MAX_TASKS 24
 
 int N, C, best = 0, nbest = 0;
-bool bestAssignment[MAX_VARS];
+bitset<MAX_VARS> bestAssignment;
 int* clauses[MAX_CLAUSES];
 
 int D_TASKS;
 int *tasks;	
 
-int calcClauses(int vi, bool* vars){
+int calcClauses(int vi, bitset<MAX_VARS>& vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		for(int v=1; v <= clauses[i][0]; v++){
-			int c = clauses[i][v];			
+			int c = clauses[i][v];
 			int a = abs(c);
 			if(c < 0){
 				if(!vars[a]){
@@ -41,7 +43,7 @@ int calcClauses(int vi, bool* vars){
 }
 
 // unsatisfiable closed clauses
-int calcClosedClauses(int vi, bool* vars){
+int calcClosedClauses(int vi, bitset<MAX_VARS>& vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		int v;
@@ -64,16 +66,16 @@ int calcClosedClauses(int vi, bool* vars){
 
 
 // vars saves variables assignments
-void branch(int vi, bool* vars, int task){
+void branch(int vi, std::bitset<MAX_VARS>& vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
-		if(sum >= best){ // only enter critical region if best must be modified
-			#pragma omp critical 
-			{
+		#pragma omp critical 
+		{	
+		if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
 					best = sum;
-					memcpy(bestAssignment, vars, (N+1) * sizeof(bool));
+					bestAssignment = vars;					
 					nbest = 1;
 					/*for(int i=1; i <= N; i++){
 						bestAssignment[i] = vars[i];
@@ -93,46 +95,13 @@ void branch(int vi, bool* vars, int task){
  		return;
 	}
 
-	if(vi != D_TASKS){
-		vars[vi] = true;
-		branch(vi+1, vars, (task << 1) + 1);
-		vars[vi] = false;
-		branch(vi+1, vars, task << 1);
-	}else{
-		
-		if(!tasks[task]){
-			tasks[task] = 1;
-			/*
-			int thread_id = omp_get_thread_num();
-			if(thread_id << (vi-1) % 2){
-				vars[vi] = false;
-				branch(vi+1, vars, task << 1);
-				
-				vars[vi] = true;
-				branch(vi+1, vars, (task << 1) + 1);
-			}else{
-				vars[vi] = true;
-				branch(vi+1, vars, (task << 1) + 1);
-				
-				vars[vi] = false;
-				branch(vi+1, vars, task << 1);
-			}*/
-			if(rand() % 2){
-				vars[vi] = false;
-				branch(vi+1, vars, task << 1);
-				
-				vars[vi] = true;
-				branch(vi+1, vars, (task << 1) + 1);
-			}else{
-				vars[vi] = true;
-				branch(vi+1, vars, (task << 1) + 1);
-				
-				vars[vi] = false;
-				branch(vi+1, vars, task << 1);
-			}
-		}
-	}
+	vars[vi] = true;
+	branch(vi+1, vars);
+	vars[vi] = false;
+	branch(vi+1, vars);	
 }
+
+
 
 int main(){
 	int start = omp_get_wtime();
@@ -153,20 +122,20 @@ int main(){
 	
 	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
 	printf("%d\n", D_TASKS);
-	//D_TASKS = 1 + 4;
-	tasks = (int*) malloc(sizeof(int) * (1 << D_TASKS) );
-	memset(tasks, 0, sizeof(int) * (1 << D_TASKS));
 
-	bool v[MAX_VARS+1];
-	#pragma omp parallel for
-	for(int th=0; th < omp_get_num_threads(); th++){
-		bool v2[MAX_VARS+1];
-		memcpy(v2, v, sizeof(v));
-		branch(1, v2, 0);
-		cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
-		printf("%d\n", omp_get_num_threads());
-	}
+	#pragma omp parallel for schedule(dynamic)
+		for(int i = 0; i < 1 << D_TASKS; i++){
+			// bits
+			cout << i << endl;
+			std::bitset<MAX_VARS> vars(i<<1);
+			branch(D_TASKS+1, vars);
+		}
+		//cout << "Thread " << omp_get_thread_num() << ": " << omp_get_wtime() - start << endl;
+		//#pragma omp single
+		//printf("%d\n", omp_get_num_threads());
+	//}
 	cout << best << " " << nbest << endl;
+	
 	for(int i=1; i <= N; i++){
 		cout << (bestAssignment[i] ? i: -i);
 		if(i < N) cout << " ";
