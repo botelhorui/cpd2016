@@ -86,7 +86,7 @@ void branch(int vi, bool* vars){
 		}
 
 		bool* newBest = (bool*) malloc(MAX_VARS);
-		memcpy(bestAssignment, vars, MAX_VARS);
+		memcpy(newBest, vars, MAX_VARS);
 
 		if(isBest){
 			#pragma omp critical
