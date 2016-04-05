@@ -76,8 +76,8 @@ void branch(int vi, bool* vars){
 		{
 		if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
-					best = sum;
 					isBest = true;
+					best = sum;
 					nbest = 1;
 				} else if(sum == best){
 					nbest++;
@@ -91,7 +91,7 @@ void branch(int vi, bool* vars){
 		if(isBest){
 			#pragma omp critical
 			{
-				if(sum > best){
+				if(sum == best){
 					free(bestAssignment);
 					bestAssignment = newBest;
 				}
