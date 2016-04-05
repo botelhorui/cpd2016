@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string.h>
+#include <omp.h>
 
 using namespace std;
 
@@ -86,6 +87,8 @@ void branch(int vi, bool* vars){
 }
 
 int main(){
+	int start = omp_get_wtime();
+
 	cin >> N >> C;
 	for(int i = 0; i < C; i++){
 		// 1 for size, 1 for last zero
@@ -101,6 +104,9 @@ int main(){
 	}
 	bool v[MAX_VARS+1];
 	branch(1, v);
+
+	cout << "Serial time: " << omp_get_wtime() - start << endl;
+
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
 		cout << (bestAssignment[i] ? i: -i);
