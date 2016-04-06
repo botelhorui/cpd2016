@@ -19,6 +19,8 @@ int* clauses[MAX_CLAUSES];
 int D_TASKS;
 int *tasks;
 
+double syncTime = 0;
+
 int calcClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
@@ -89,21 +91,21 @@ void branch(int vi, bool* vars){
 		memcpy(newBest, vars, MAX_VARS);
 
 		if(isBest){
+			double st = omp_get_wtime();
 			#pragma omp critical
 			{
 				if(sum == best){
-					free(bestAssignment);
+					//free(bestAssignment);
 					bestAssignment = newBest;
 				}
 			}
+			syncTime += omp_get_wtime() - st;
 		}
 		
 		return;
 	}
-	int b;
-	#pragma omp critical
-	b = best;
-	if(C - calcClosedClauses(vi,vars) < b){
+	
+	if(C - calcClosedClauses(vi,vars) < best){
  		return;
 	}
 
@@ -116,7 +118,7 @@ void branch(int vi, bool* vars){
 
 
 int main(){
-	int start = omp_get_wtime();
+	double start = omp_get_wtime();
 
 	cin >> N >> C;
 	for(int i = 0; i < C; i++){
@@ -152,6 +154,7 @@ int main(){
 		printf("Thread %d: %lf seconds\n", omp_get_thread_num(), omp_get_wtime()-start);
 	}
 	printf("Total time: %lf seconds\n", omp_get_wtime()-start);
+	printf("Sync time: %lf seconds\n", syncTime);
 	
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
