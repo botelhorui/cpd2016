@@ -105,7 +105,7 @@ int main(){
 	bool v[MAX_VARS+1];
 	branch(1, v);
 
-	cout << "Serial time: " << omp_get_wtime() - start << endl;
+	cout << "Serial time: " << omp_get_wtime() - start << " seconds." << endl;
 
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
