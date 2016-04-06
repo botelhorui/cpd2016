@@ -76,7 +76,7 @@ void branch(int vi, bool* vars){
 		bool isBest = false;
 		//#pragma omp critical 
 		//{
-		if(sum >= best){ // only enter critical region if best must be modified			
+		//if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
 					isBest = true;
 					best = sum;
@@ -84,7 +84,7 @@ void branch(int vi, bool* vars){
 				} else if(sum == best){
 					nbest++;
 				}
-			}
+			//}
 		//}
 
 		bool* newBest = (bool*) malloc(MAX_VARS);
@@ -134,8 +134,9 @@ int main(){
 		}
 	}
 	
-	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
+	D_TASKS = log2(omp_get_max_threads()) + 3; // NOT WORKING FIX THIS!
 	//printf("D_TASKS: %d\n", D_TASKS);
+
 
 	#pragma omp parallel
 	{
