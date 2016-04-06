@@ -133,7 +133,7 @@ int main(){
 	}
 	
 	D_TASKS = log2(omp_get_max_threads()) + 4; // NOT WORKING FIX THIS!
-	printf("%d\n", D_TASKS);
+	//printf("D_TASKS: %d\n", D_TASKS);
 
 	#pragma omp parallel
 	{
@@ -149,11 +149,11 @@ int main(){
 			}
 			branch(D_TASKS+1, vars);
 		}
-		printf("Thread %d: %lf\n", omp_get_thread_num(), omp_get_wtime()-start);
+		printf("Thread %d: %lf seconds\n", omp_get_thread_num(), omp_get_wtime()-start);
 	}
+	printf("Total time: %lf seconds\n", omp_get_wtime()-start);
 	
 	cout << best << " " << nbest << endl;
-	
 	for(int i=1; i <= N; i++){
 		cout << (bestAssignment[i] ? i: -i);
 		if(i < N) cout << " ";
