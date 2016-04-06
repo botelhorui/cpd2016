@@ -137,7 +137,7 @@ int main(){
 
 	#pragma omp parallel
 	{
-		#pragma omp for schedule(dynamic)
+		#pragma omp for nowait schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
 			int n = i;
@@ -151,6 +151,7 @@ int main(){
 		}
 		printf("Thread %d: %lf\n", omp_get_thread_num(), omp_get_wtime()-start);
 	}
+	
 	cout << best << " " << nbest << endl;
 	
 	for(int i=1; i <= N; i++){
