@@ -94,7 +94,7 @@ void branch(register int vi, bool* vars){
 			double st = omp_get_wtime();
 			#pragma omp critical
 			{
-				if(sum == best){
+				if(sum >= best){
 					//free(bestAssignment);
 					bestAssignment = newBest;
 				}
