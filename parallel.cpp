@@ -72,8 +72,8 @@ void branch(int vi, bool* vars){
 		int sum = calcClauses(vi, vars);
 
 		bool isBest = false;
-		#pragma omp critical 
-		{
+		//#pragma omp critical 
+		//{
 		if(sum >= best){ // only enter critical region if best must be modified			
 				if(sum > best){
 					isBest = true;
@@ -83,7 +83,7 @@ void branch(int vi, bool* vars){
 					nbest++;
 				}
 			}
-		}
+		//}
 
 		bool* newBest = (bool*) malloc(MAX_VARS);
 		memcpy(newBest, vars, MAX_VARS);
