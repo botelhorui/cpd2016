@@ -13,10 +13,10 @@ int N, C, best = 0, nbest = 0;
 bool bestAssignment[MAX_VARS];
 int* clauses[MAX_CLAUSES];
 
-int calcClauses(register int vi, bool* vars){
-	register int sum = 0;
-	for(register int i=0; i < C; i++){
-		for(register int v=1; v <= clauses[i][0]; v++){
+int calcClauses(int vi, bool* vars){
+	int sum = 0;
+	for(int i=0; i < C; i++){
+		for(int v=1; v <= clauses[i][0]; v++){
 			int c = clauses[i][v];
 			int a = abs(c);
 			if(c < 0){
@@ -37,13 +37,13 @@ int calcClauses(register int vi, bool* vars){
 }
 
 // unsatisfiable closed clauses
-int calcClosedClauses(register int vi, bool* vars){
-	register int sum = 0;
-	for(register int i=0; i < C; i++){
-		register int v;
+int calcClosedClauses(int vi, bool* vars){
+	int sum = 0;
+	for(int i=0; i < C; i++){
+		int v;
 		for(v=1; v <= clauses[i][0]; v++){
-			register int c = clauses[i][v];
-			register int a = abs(c);
+			int c = clauses[i][v];
+			int a = abs(c);
 			if(a >= vi){
 				break;
 			}else if(c < 0){
@@ -60,7 +60,7 @@ int calcClosedClauses(register int vi, bool* vars){
 
 
 // vars saves variables assignments
-void branch(register int vi, bool* vars){
+void branch(int vi, bool* vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);

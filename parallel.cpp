@@ -3,32 +3,17 @@
 #include <string.h>
 #include <omp.h>
 #include <math.h>
+#include <bitset>
 
 using namespace std;
-
-#define GET(bs, ind) (ind < 129) ? ((bs->a >> (ind-1) ) & 1) : ((bs->b >> (ind-129)) & 1)
-#define SET(bs, ind, v) (ind < 129) ? (bs->a ^= (-(v) ^ bs->a) & (1LL << (ind-1) )) : (bs->b ^= (-(v) ^ bs->b) & (1LL << (ind-129)) )
 
 #define MAX_CLAUSES (2 << 16) + 1
 #define MAX_VARS 128 +1
 #define MAX_VARS_PER_CLAUSE 21
 #define MAX_TASKS 24
 
-class Bitset{
-	public:
-		int64_t a, b;
-	Bitset(int64_t a, int64_t b){
-		this->a = a;
-		this->b = b;
-	}
-	Bitset(){
-		this->a = 0;
-		this->b = 0;
-	}
-};
-
 int N, C, best = 0, nbest = 0;
-Bitset* bestAssignment = NULL;
+bool* bestAssignment = (bool*) malloc(MAX_VARS);
 int clauses[MAX_CLAUSES][MAX_VARS_PER_CLAUSE];
 
 int D_TASKS;
@@ -36,21 +21,21 @@ int *tasks;
 
 double syncTime = 0;
 
-Bitset* localAssignment;
+bool** localAssignment;
 
-int calcClauses(int vi, Bitset* vars){
+int calcClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		for(int v=1; v <= clauses[i][0]; v++){
 			int c = clauses[i][v];
 			int a = abs(c);
 			if(c < 0){
-				if(!(GET(vars, a)) ){
+				if(!vars[a]){
 					sum++;
 					break;
-				}
+				}		
 			}else{
-				if((GET(vars, a))){
+				if(vars[a]){
 					sum++;
 					break;
 				}
@@ -62,7 +47,7 @@ int calcClauses(int vi, Bitset* vars){
 }
 
 // unsatisfiable closed clauses
-int calcClosedClauses(int vi, Bitset* vars){
+int calcClosedClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
 		int v;
@@ -72,9 +57,9 @@ int calcClosedClauses(int vi, Bitset* vars){
 			if(a >= vi){
 				break;
 			}else if(c < 0){
-				if(!(GET(vars, a))) break;
+				if(!vars[a]) break;
 			}else{
-				if( (GET(vars, a))) break;
+				if( vars[a]) break;
 			}
 			
 		}
@@ -85,31 +70,34 @@ int calcClosedClauses(int vi, Bitset* vars){
 
 
 // vars saves variables assignments
-void branch(int vi, Bitset* vars){
+void branch(int vi, bool* vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
 
 		bool isBest = false;
+		//#pragma omp critical 
+		//{
+		//if(sum >= best){ // only enter critical region if best must be modified			
+				if(sum > best){
+					isBest = true;
+					best = sum;
+					nbest = 1;
+				} else if(sum == best){
+					nbest++;
+				}
+			//}
+		//}
 
-		if(sum > best){
-			isBest = true;
-			best = sum;
-			nbest = 1;
-		} else if(sum == best){
-			nbest++;
-		}
-		
-		
+		memcpy(localAssignment[omp_get_thread_num()], vars, MAX_VARS);
+
 		if(isBest){
-			localAssignment[omp_get_thread_num()].a = vars->a;
-			localAssignment[omp_get_thread_num()].b = vars->b;
-
 			double st = omp_get_wtime();
 			#pragma omp critical
 			{
 				if(sum >= best){
-					bestAssignment = &localAssignment[omp_get_thread_num()];
+					//free(bestAssignment);
+					bestAssignment = localAssignment[omp_get_thread_num()];
 				}
 			}
 			syncTime += omp_get_wtime() - st;
@@ -122,16 +110,15 @@ void branch(int vi, Bitset* vars){
  		return;
 	}
 
-	SET(vars, vi, true);
+	vars[vi] = true;
 	branch(vi+1, vars);
-	SET(vars, vi, false);
-	branch(vi+1, vars);
+	vars[vi] = false;
+	branch(vi+1, vars);	
 }
 
 
 
 int main(){
-	
 	double start = omp_get_wtime();
 
 	cin >> N >> C;
@@ -148,27 +135,24 @@ int main(){
 	}
 	
 	D_TASKS = log2(omp_get_max_threads()) + 3; // NOT WORKING FIX THIS!
-	if(D_TASKS > 31)
-		D_TASKS = 31;
-	if(D_TASKS > N)
-		D_TASKS = N;
 	//printf("D_TASKS: %d\n", D_TASKS);
-	localAssignment = (Bitset *) malloc(sizeof(Bitset) * omp_get_max_threads());
+	localAssignment = (bool **) malloc(sizeof(bool*) * omp_get_max_threads());
 
 	#pragma omp parallel
 	{
+		localAssignment[omp_get_thread_num()] = (bool*) malloc(MAX_VARS);
 		printf("Thread %d\n", omp_get_thread_num());
-		#pragma omp for nowait schedule(guided)
+		#pragma omp for nowait schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
 			int n = i;
-			Bitset vars(i, 0);
-			for(int j=0; n > 0; j++){
-				SET((&vars), j, (n & 1));
+			bool vars[MAX_VARS];
+			memset(vars, 0, sizeof(vars));
+			for(int j=1; n > 0; j++){
+				vars[j] = (n & 1);
 				n = n >> 1;
 			}
-
-			branch(D_TASKS+1, &vars);
+			branch(D_TASKS+1, vars);
 		}
 		printf("Thread %d: %lf seconds\n", omp_get_thread_num(), omp_get_wtime()-start);
 	}
@@ -177,7 +161,7 @@ int main(){
 	
 	cout << best << " " << nbest << endl;
 	for(int i=1; i <= N; i++){
-		cout << ( (GET(bestAssignment, i)) == 1 ? i : -i);
+		cout << (bestAssignment[i] ? i: -i);
 		if(i < N) cout << " ";
 	}
 	cout << endl;
