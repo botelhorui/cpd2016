@@ -38,10 +38,10 @@ double syncTime = 0;
 
 Bitset* localAssignment;
 
-int calcClauses(register int vi, Bitset* vars){
-	register int sum = 0;
-	for(register int i=0; i < C; i++){
-		for(register int v=1; v <= clauses[i][0]; v++){
+int calcClauses(int vi, Bitset* vars){
+	int sum = 0;
+	for(int i=0; i < C; i++){
+		for(int v=1; v <= clauses[i][0]; v++){
 			int c = clauses[i][v];
 			int a = abs(c);
 			if(c < 0){
@@ -62,13 +62,13 @@ int calcClauses(register int vi, Bitset* vars){
 }
 
 // unsatisfiable closed clauses
-int calcClosedClauses(register int vi, Bitset* vars){
-	register int sum = 0;
-	for(register int i=0; i < C; i++){
-		register int v;
+int calcClosedClauses(int vi, Bitset* vars){
+	int sum = 0;
+	for(int i=0; i < C; i++){
+		int v;
 		for(v=1; v <= clauses[i][0]; v++){
-			register int c = clauses[i][v];
-			register int a = abs(c);
+			int c = clauses[i][v];
+			int a = abs(c);
 			if(a >= vi){
 				break;
 			}else if(c < 0){
@@ -85,7 +85,7 @@ int calcClosedClauses(register int vi, Bitset* vars){
 
 
 // vars saves variables assignments
-void branch(register int vi, Bitset* vars){
+void branch(int vi, Bitset* vars){
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
