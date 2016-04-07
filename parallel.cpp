@@ -150,6 +150,8 @@ int main(){
 	D_TASKS = log2(omp_get_max_threads()) + 3; // NOT WORKING FIX THIS!
 	if(D_TASKS > 31)
 		D_TASKS = 31;
+	if(D_TASKS > N)
+		D_TASKS = N;
 	//printf("D_TASKS: %d\n", D_TASKS);
 	localAssignment = (Bitset *) malloc(sizeof(Bitset) * omp_get_max_threads());
 
@@ -174,7 +176,6 @@ int main(){
 	printf("Sync time: %lf seconds\n", syncTime);
 	
 	cout << best << " " << nbest << endl;
-	cout << best << "[" << bestAssignment->a << ", " << bestAssignment->b << "]" << endl;
 	for(int i=1; i <= N; i++){
 		cout << ( (GET(bestAssignment, i)) == 1 ? i : -i);
 		if(i < N) cout << " ";
