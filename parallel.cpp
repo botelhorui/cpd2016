@@ -14,12 +14,14 @@ using namespace std;
 
 int N, C, best = 0, nbest = 0;
 bool* bestAssignment = (bool*) malloc(MAX_VARS);
-int* clauses[MAX_CLAUSES];
+int clauses[MAX_CLAUSES][MAX_VARS_PER_CLAUSE];
 
 int D_TASKS;
 int *tasks;
 
 double syncTime = 0;
+
+bool** localAssignment;
 
 int calcClauses(register int vi, bool* vars){
 	register int sum = 0;
@@ -87,8 +89,7 @@ void branch(register int vi, bool* vars){
 			//}
 		//}
 
-		bool* newBest = (bool*) malloc(MAX_VARS);
-		memcpy(newBest, vars, MAX_VARS);
+		memcpy(localAssignment[omp_get_thread_num()], vars, MAX_VARS);
 
 		if(isBest){
 			double st = omp_get_wtime();
@@ -96,7 +97,7 @@ void branch(register int vi, bool* vars){
 			{
 				if(sum >= best){
 					//free(bestAssignment);
-					bestAssignment = newBest;
+					bestAssignment = localAssignment[omp_get_thread_num()];
 				}
 			}
 			syncTime += omp_get_wtime() - st;
@@ -123,7 +124,6 @@ int main(){
 	cin >> N >> C;
 	for(int i = 0; i < C; i++){
 		// 1 for size, 1 for last zero
-		clauses[i] = new int[MAX_VARS_PER_CLAUSE];
 		for(int v = 1;;v++){
 			cin >> clauses[i][v];
 			if(clauses[i][v] == 0){
@@ -136,10 +136,12 @@ int main(){
 	
 	D_TASKS = log2(omp_get_max_threads()) + 3; // NOT WORKING FIX THIS!
 	//printf("D_TASKS: %d\n", D_TASKS);
-
+	localAssignment = (bool **) malloc(sizeof(bool*) * omp_get_max_threads());
 
 	#pragma omp parallel
 	{
+		localAssignment[omp_get_thread_num()] = (bool*) malloc(MAX_VARS);
+		printf("Thread %d\n", omp_get_thread_num());
 		#pragma omp for nowait schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
 			// bits
