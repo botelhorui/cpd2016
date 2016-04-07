@@ -33,7 +33,7 @@ int calcClauses(int vi, bool* vars){
 				if(!vars[a]){
 					sum++;
 					break;
-				}		
+				}
 			}else{
 				if(vars[a]){
 					sum++;
@@ -76,27 +76,21 @@ void branch(int vi, bool* vars){
 		int sum = calcClauses(vi, vars);
 
 		bool isBest = false;
-		//#pragma omp critical 
-		//{
-		//if(sum >= best){ // only enter critical region if best must be modified			
-				if(sum > best){
-					isBest = true;
-					best = sum;
-					nbest = 1;
-				} else if(sum == best){
-					nbest++;
-				}
-			//}
-		//}
-
-		memcpy(localAssignment[omp_get_thread_num()], vars, MAX_VARS);
+		
+		if(sum > best){
+			isBest = true;
+			best = sum;
+			nbest = 1;
+		} else if(sum == best){
+			nbest++;
+		}
 
 		if(isBest){
+			memcpy(localAssignment[omp_get_thread_num()], vars, MAX_VARS);
 			double st = omp_get_wtime();
 			#pragma omp critical
 			{
 				if(sum >= best){
-					//free(bestAssignment);
 					bestAssignment = localAssignment[omp_get_thread_num()];
 				}
 			}
