@@ -23,6 +23,7 @@ double syncTime = 0;
 
 bool** localAssignment;
 
+// calculates the number of clauses that are true
 int calcClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
@@ -46,7 +47,7 @@ int calcClauses(int vi, bool* vars){
 	return sum;
 }
 
-// unsatisfiable closed clauses
+// calculates unsatisfiable closed clauses - counts clauses where all variables have a value, yet the clause is false
 int calcClosedClauses(int vi, bool* vars){
 	int sum = 0;
 	for(int i=0; i < C; i++){
@@ -69,8 +70,11 @@ int calcClosedClauses(int vi, bool* vars){
 }
 
 
-// vars saves variables assignments
+
 void branch(int vi, bool* vars){
+	/*  vi    - current variable index
+		vars  - variables assignments
+	*/
 	
 	if(vi == N+1){
 		int sum = calcClauses(vi, vars);
@@ -107,7 +111,7 @@ void branch(int vi, bool* vars){
 	vars[vi] = true;
 	branch(vi+1, vars);
 	vars[vi] = false;
-	branch(vi+1, vars);	
+	branch(vi+1, vars);
 }
 
 
@@ -128,17 +132,14 @@ int main(){
 		}
 	}
 	
-	D_TASKS = log2(omp_get_max_threads()) + 3; // NOT WORKING FIX THIS!
-	//printf("D_TASKS: %d\n", D_TASKS);
+	D_TASKS = log2(omp_get_max_threads()) + 3;
 	localAssignment = (bool **) malloc(sizeof(bool*) * omp_get_max_threads());
 
 	#pragma omp parallel
 	{
 		localAssignment[omp_get_thread_num()] = (bool*) malloc(MAX_VARS);
-		printf("Thread %d\n", omp_get_thread_num());
 		#pragma omp for nowait schedule(dynamic)
 		for(int i = 0; i < 1 << D_TASKS; i++){
-			// bits
 			int n = i;
 			bool vars[MAX_VARS];
 			memset(vars, 0, sizeof(vars));
