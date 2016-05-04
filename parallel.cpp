@@ -81,13 +81,17 @@ void branch(int vi, bool* vars){
 
 		bool isBest = false;
 		
-		if(sum > best){
-			isBest = true;
-			best = sum;
-			nbest = 1;
-		} else if(sum == best){
-			nbest++;
+		#pragma omp critical
+		{
+			if(sum > best){
+				isBest = true;
+				best = sum;
+				nbest = 1;
+			} else if(sum == best){
+				nbest++;
+			}
 		}
+		
 
 		if(isBest){
 			memcpy(localAssignment[omp_get_thread_num()], vars, MAX_VARS);
