@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <string.h>
 #include <omp.h>
@@ -86,15 +87,20 @@ void branch(int vi, bool* vars){
 	branch(vi+1, vars);
 }
 
-int main(){
+int main(int argc, char** argv){
+	if(argc != 2){
+		printf("Error, usage: %s <input>\n", argv[0]);
+		exit(0);
+	}	
 	int start = omp_get_wtime();
-
-	cin >> NUM_VARS >> NUM_CLAUSES;
+	ifstream in;
+	in.open(argv[1]);
+	in >> NUM_VARS >> NUM_CLAUSES;
 	for(int i = 0; i < NUM_CLAUSES; i++){
 		// 1 for size, 1 for last zero
 		clauses[i] = new int[MAX_VARS_PER_CLAUSE];
 		for(int v = 1;;v++){
-			cin >> clauses[i][v];
+			in >> clauses[i][v];
 			if(clauses[i][v] == 0){
 				clauses[i][0]= v - 1;
 				break;
