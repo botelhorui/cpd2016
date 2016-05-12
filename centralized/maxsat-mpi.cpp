@@ -60,10 +60,8 @@ void send_best_assignment(){
 			if(bestAssignment[i])
 				set[i/64+1] |= 1 << (i%64);
 	}
-	printf("On worker: Sending best assignment\n");
 	MPI_Send(set, set_size, MPI_LONG_LONG_INT, 0, BEST_ASSIGNMENT, MPI_COMM_WORLD);
-	printf("On worker: Sent best assignment\n");
-
+	
 }
 
 inline double min(double a, double b){
@@ -107,7 +105,7 @@ void centralized_load_balancer(){
 					interval2[1] = interval[1];
 				}
 				MPI_Send(interval2, 2, MPI_INT, sender, WORK, MPI_COMM_WORLD);
-			}		
+			}
 
 			if(proc_stopped == nprocs)
 				break;	
@@ -150,6 +148,7 @@ int main(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+
 	if(argc != 2){
 		if(id == 0)
 			printf("Error, usage: %s <input>\n", argv[0]);
@@ -157,8 +156,10 @@ int main(int argc, char* argv[]){
 		exit(0);
 	}	
 	read_input(argv[1]);
+	
+	double start = MPI_Wtime();
 	//DTASKS = (int)log2(nprocs*4);
-	DTASKS = min(31, 0.75*NUM_VARS);
+	DTASKS = (int)(0.25 * NUM_VARS);
 
 	if(nprocs == 1){
 		one_worker();
@@ -168,9 +169,14 @@ int main(int argc, char* argv[]){
 		centralized_worker();
 	}
 
-	if(id == 0)
+	double end = MPI_Wtime();
+	
+	if(id == 0){
+		printf("Elapsed time: %lf\n", end-start);
 		print_result();
-	printf("Process %d finished\n", id);
+	}
+
 	
 	MPI_Finalize();
+
 }
