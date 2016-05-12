@@ -66,15 +66,20 @@ void send_best_assignment(){
 
 }
 
+inline double min(double a, double b){
+	return a < b ? a : b;
+}
+
+inline double max(double a, double b){
+	return a > b ? a : b;
+}
 
 void centralized_load_balancer(){
 	proc_stopped = 1;
 
 	interval[0] = 0;
 	interval[1] = 1 << DTASKS;
-	length = (interval[1] - interval[0]) / DIV;
-	if(length == 0)
-		length == 1;
+	double n_tasks = interval[1];
 	printf("length %d\n",length);
 
 	printf("Root: interval[1]:%d\n",interval[1]);
@@ -94,8 +99,9 @@ void centralized_load_balancer(){
 				proc_stopped++;
 			}else{
 				int interval2[2];
+				int length = max( (int)(n_tasks/nprocs * 0.5 * pow(2, -interval[0] / n_tasks)), 1);
 				interval2[0] = interval[0];
-				interval2[1] = interval[0]+length;
+				interval2[1] = interval[0] + length;
 				interval[0] = interval2[1];
 				if(interval2[1] >= interval[1]){
 					interval2[1] = interval[1];
@@ -142,7 +148,7 @@ void centralized_worker(){
 
 int main(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);	
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	if(argc != 2){
 		if(id == 0)
@@ -151,7 +157,8 @@ int main(int argc, char* argv[]){
 		exit(0);
 	}	
 	read_input(argv[1]);
-	DTASKS = (int)log2(nprocs*4);
+	//DTASKS = (int)log2(nprocs*4);
+	DTASKS = min(31, 0.75*NUM_VARS);
 
 	if(nprocs == 1){
 		one_worker();
