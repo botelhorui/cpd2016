@@ -44,7 +44,7 @@ void receive_best_assignment(int t){
 
 	MPI_Recv(set, set_size, MPI_LONG_LONG_INT, t, BEST_ASSIGNMENT, MPI_COMM_WORLD, &status);
 	count_best += set[0];
-	for(int i=1; i<NUM_VARS; i++)
+	for(int i=1; i<NUM_VARS+1; i++)
 		if( (set[i/64+1] >> (i%64)) & 1)
 			bestAssignment[i] = true;
 	
@@ -56,7 +56,7 @@ void send_best_assignment(){
 	memset(set, 0, set_size * sizeof(ll));
 	set[0] = count_best;
 	if(count_best > 0){
-		for(int i=1; i<NUM_VARS; i++)
+		for(int i=1; i<NUM_VARS+1; i++)
 			if(bestAssignment[i])
 				set[i/64+1] |= 1 << (i%64);
 	}
