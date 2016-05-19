@@ -78,9 +78,9 @@ void centralized_load_balancer(){
 	interval[0] = 0;
 	interval[1] = 1 << DTASKS;
 	double n_tasks = interval[1];
-	printf("length %d\n",length);
+	//printf("length %d\n",length);
 
-	printf("Root: interval[1]:%d\n",interval[1]);
+	//printf("Root: interval[1]:%d\n",interval[1]);
 	int sender;
 	// centralized load balancer
 	MPI_Request req;
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]){
 	double end = MPI_Wtime();
 	
 	if(id == 0){
-		printf("Elapsed time: %lf\n", end-start);
+		//	printf("Elapsed time: %lf\n", end-start);
 		print_result();
 	}
 
